@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Giggle Farm</title>
+<style>
+:root{--sky1:#7fd6ff;--sky2:#d9f4ff;--grass:#5fcf5a;--grass2:#3fae45;--ink:#3a2a6b;--pop:#ffe14d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sky1:#2b2f7a;--sky2:#5a5fc4;--grass:#2f8f46;--grass2:#226b36;--ink:#fff7c2}}
+:root[data-theme="dark"]{--sky1:#2b2f7a;--sky2:#5a5fc4;--grass:#2f8f46;--grass2:#226b36;--ink:#fff7c2}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:linear-gradient(var(--sky1),var(--sky2) 55%,var(--grass) 55%,var(--grass2));color:var(--ink);
+font-family:"Baloo 2","Fredoka","Chalkboard SE","Comic Sans MS",system-ui,sans-serif;
+user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;overflow:hidden;
+display:flex;flex-direction:column;align-items:center}
+h1{margin:10px 0 0;font-size:clamp(26px,7vw,40px);font-weight:800;text-shadow:0 3px 0 #fff8}
+#sun{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:12px;font-size:clamp(54px,15vw,84px);background:none;border:0;cursor:pointer;animation:spin 14s linear infinite}
+#grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,3vw,24px);width:min(100%,560px);padding:0 12px;align-content:center;box-sizing:border-box}
+.a{background:none;border:0;cursor:pointer;font-size:clamp(64px,21vw,116px);line-height:1;padding:6px 0;animation:bob 2.2s ease-in-out infinite;filter:drop-shadow(0 8px 0 #0002)}
+.a:nth-child(2n){animation-delay:-.7s}.a:nth-child(3n){animation-delay:-1.4s}
+.a:focus-visible,#sun:focus-visible,#party:focus-visible{outline:4px solid var(--pop);border-radius:20px}
+.boing{animation:boing .6s cubic-bezier(.3,1.6,.5,1)!important}
+#party{margin:8px 0 18px;font:800 clamp(22px,6vw,30px) inherit;font-family:inherit;color:#3a2a6b;background:var(--pop);border:0;border-radius:40px;padding:12px 30px;box-shadow:0 6px 0 #d4a900;cursor:pointer}
+#party:active{transform:translateY(4px);box-shadow:0 2px 0 #d4a900}
+.p{position:fixed;pointer-events:none;font-size:30px;transform:translate(-50%,-50%);animation:fly 1.1s ease-out forwards;z-index:9}
+.w{position:fixed;pointer-events:none;font-weight:800;font-size:clamp(32px,10vw,56px);color:#fff;-webkit-text-stroke:2px #3a2a6b;paint-order:stroke fill;transform:translate(-50%,-50%);animation:rise 1.1s ease-out forwards;z-index:10;white-space:nowrap}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-3deg)}}
+@keyframes boing{0%{transform:scale(1)}25%{transform:scale(1.35,.65)}55%{transform:scale(.8,1.3) translateY(-30px) rotate(10deg)}100%{transform:scale(1)}}
+@keyframes fly{to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
+@keyframes rise{to{transform:translate(-50%,-190%) scale(1.3);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.a,#sun{animation:none}}
+</style>
+</head>
+<body>
+<h1>Giggle Farm</h1>
+<button id="sun" aria-label="Giggling sun">🌞</button>
+<main id="grid"></main>
+<button id="party">🎉 Everybody!</button>
+<script>
+const AC=window.AudioContext||window.webkitAudioContext;let ctx;
+function audio(){if(!ctx){try{ctx=new AC()}catch(e){}}if(ctx&&ctx.state==='suspended')ctx.resume();return ctx}
+function tone(type,f0,f1,d,v,at=0,o={}){
+  const c=ctx,t=c.currentTime+at,os=c.createOscillator(),g=c.createGain(),lp=c.createBiquadFilter();
+  os.type=type;lp.type='lowpass';lp.frequency.value=o.lp||2500;
+  os.frequency.setValueAtTime(f0,t);os.frequency.exponentialRampToValueAtTime(f1,t+d);
+  if(o.rate){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=o.rate;lg.gain.value=o.depth;l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+d+.05)}
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  os.connect(lp);lp.connect(g);g.connect(c.destination);os.start(t);os.stop(t+d+.05)}
+const R=(a,b)=>a+Math.random()*(b-a);
+const animals=[
+ {e:'🐮',w:'MOOOO!',s:p=>tone('sawtooth',160*p,105*p,1.1,.25,0,{lp:700,rate:6,depth:9})},
+ {e:'🐷',w:'OINK OINK!',s:p=>[0,1,2].forEach(i=>tone('square',R(180,260)*p,110*p,.13,.15,i*.15,{lp:900}))},
+ {e:'🦆',w:'QUACK!',s:p=>[0,.22].forEach(t=>tone('sawtooth',540*p,300*p,.16,.2,t,{lp:1600}))},
+ {e:'🐑',w:'BAAAA!',s:p=>tone('sawtooth',390*p,330*p,.9,.2,0,{lp:1300,rate:28,depth:45})},
+ {e:'🐔',w:'BOK BOK!',s:p=>[0,1,2,3,4].forEach(i=>tone('sine',(650+i*70)*p,(950+i*50)*p,.08,.22,i*.1))},
+ {e:'🐸',w:'RIBBIT!',s:p=>[0,.25].forEach(t=>tone('square',90*p,190*p,.2,.15,t,{lp:700,rate:40,depth:30}))},
+ {e:'🐱',w:'MEOW!',s:p=>{tone('sine',500*p,950*p,.25,.25);tone('sine',950*p,430*p,.45,.25,.25)}},
+ {e:'🐶',w:'WOOF!',s:p=>[0,.28].forEach(t=>tone('sawtooth',330*p,170*p,.16,.22,t,{lp:900}))},
+ {e:'🦄',w:'TA-DAA!',s:p=>[523,659,784,1047].forEach((f,i)=>tone('triangle',f*p,f*p*1.01,.3,.2,i*.1))}
+];
+const bits=['⭐','💖','🎈','🌸','🦋','✨','🍓'];
+function burst(x,y,word,set=bits){
+  if(word){const w=document.createElement('div');w.className='w';w.textContent=word;w.style.left=x+'px';w.style.top=y+'px';document.body.append(w);setTimeout(()=>w.remove(),1200)}
+  for(let i=0;i<9;i++){const p=document.createElement('div');p.className='p';p.textContent=set[Math.floor(Math.random()*set.length)];
+    p.style.left=x+'px';p.style.top=y+'px';p.style.setProperty('--dx',R(-150,150)+'px');p.style.setProperty('--dy',R(-220,40)+'px');p.style.setProperty('--r',R(-90,90)+'deg');
+    document.body.append(p);setTimeout(()=>p.remove(),1200)}}
+function hit(a,x,y){
+  if(!audio())return;a.s(R(.8,1.3));
+  const b=a.el,r=b.getBoundingClientRect();
+  b.classList.remove('boing');void b.offsetWidth;b.classList.add('boing');
+  burst(x??r.left+r.width/2,y??r.top+r.height/2,a.w);
+  try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}}
+const grid=document.getElementById('grid');
+animals.forEach(a=>{const b=document.createElement('button');b.className='a';b.textContent=a.e;b.setAttribute('aria-label',a.w);a.el=b;
+  b.addEventListener('pointerdown',e=>{e.stopPropagation();hit(a,e.clientX,e.clientY)});grid.append(b)});
+document.getElementById('party').addEventListener('pointerdown',e=>{e.stopPropagation();
+  [...animals].sort(()=>Math.random()-.5).forEach((a,i)=>setTimeout(()=>hit(a),i*380))});
+document.getElementById('sun').addEventListener('pointerdown',e=>{e.stopPropagation();if(!audio())return;
+  [660,784,880,988,1175,988,1319].forEach((f,i)=>tone('sine',f,f*1.02,.14,.2,i*.08));
+  burst(e.clientX,e.clientY,'HEE HEE HEE!',['🌟','☀️','😄','✨'])});
+document.addEventListener('pointerdown',e=>{if(!audio())return;
+  const f=R(300,900);tone('sine',f,f*2,.12,.25);burst(e.clientX,e.clientY,'',['🫧','⭐','🎈','🌈','💫'])});
+</script>
+</body>
+</html>
